@@ -61,7 +61,7 @@ CREATE TABLE Payment_log(
 );
 
 CREATE TABLE User_types(
-	User_type_ID int IDENTITY(1,1) PRIMARY KEY,
+	User_type_ID tinyint IDENTITY(1,1) PRIMARY KEY,
 	Type nvarchar(50) NOT NULL
 );
 
@@ -70,7 +70,7 @@ CREATE TABLE Accounts(
 	Login nvarchar(50) NOT NULL,
 	Password nvarchar(50) NOT NULL,
 	User_ID int NOT NULL,
-	User_type_ID int NOT NULL,
+	User_type_ID tinyint NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES Users(User_ID),
 	FOREIGN KEY (User_type_ID) REFERENCES User_types(User_type_ID)
 );
