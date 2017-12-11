@@ -3,7 +3,12 @@ use InternetProvider;
 
 GO
 
-CREATE PROCEDURE InsertUserType (@type nvarchar(50))
+IF OBJECT_ID('dbo.InsertUserType') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.InsertUserType 
+END 
+GO
+CREATE PROCEDURE dbo.InsertUserType (@type nvarchar(50))
 AS 
 BEGIN TRY
 	BEGIN TRAN
@@ -16,7 +21,12 @@ END CATCH;
 
 GO
 
-CREATE PROCEDURE InsertTariffs (@Tariff_name nvarchar(50), @Monthly_payment real, @speed smallint)
+IF OBJECT_ID('dbo.InsertTariffs') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.InsertTariffs 
+END 
+GO
+CREATE PROCEDURE dbo.InsertTariffs (@Tariff_name nvarchar(50), @Monthly_payment real, @speed smallint)
 AS
 BEGIN TRY
 	BEGIN TRAN
@@ -29,7 +39,7 @@ BEGIN CATCH
 END CATCH;
 
 
-CREATE PROCEDURE InsertUser(@First_name nvarchar(50), @Last_name nvarchar(50), @Patronymic nvarchar(50), @Phone int, @Email nvarchar(50), 
+--CREATE PROCEDURE InsertUser(@First_name nvarchar(50), @Last_name nvarchar(50), @Patronymic nvarchar(50), @Phone int, @Email nvarchar(50), 
 
 
 
