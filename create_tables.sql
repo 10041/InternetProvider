@@ -24,7 +24,6 @@ CREATE TABLE Phones(
 	Phone_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
 	Phone nchar(15) NOT NULL,
-	Priority bit NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
 );
 
@@ -32,14 +31,13 @@ CREATE TABLE Emails(
 	Email_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
 	Email varchar(50) NOT NULL,
-	Priority bit NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
 );
 
 CREATE TABLE Physical_addresses(
 	Ph_address_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
-	location geometry,	
+	location geography,	
 	FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
 );
 
@@ -75,8 +73,6 @@ CREATE TABLE Accounts(
 	FOREIGN KEY (User_type_ID) REFERENCES User_types(User_type_ID)
 );
 
-
-
 DROP TABLE Physical_addresses;
 DROP TABLE Logical_addresses;
 DROP TABLE Payment_log;
@@ -86,3 +82,14 @@ DROP TABLE Phones;
 DROP TABLE Users;
 DROP TABLE Tariffs;
 DROP TABLE User_types;
+
+ 
+TRUNCATE TABLE Physical_addresses;
+TRUNCATE TABLE Logical_addresses;
+TRUNCATE TABLE Payment_log;
+TRUNCATE TABLE Accounts;
+TRUNCATE TABLE Emails;
+TRUNCATE TABLE Phones;
+TRUNCATE TABLE Users;
+TRUNCATE TABLE Tariffs;
+TRUNCATE TABLE User_types;
