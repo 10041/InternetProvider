@@ -54,7 +54,7 @@ GO
 CREATE TABLE dbo.Emails(
 	Email_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
-	Email varchar(50) NOT NULL,
+	Email varchar(50) NOT NULL UNIQUE,
 	FOREIGN KEY (User_ID) REFERENCES dbo.Users(User_ID)
 );
 ----------------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ GO
 CREATE TABLE dbo.Physical_addresses(
 	Ph_address_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
-	location geography,	
+	Location geography,	
 	FOREIGN KEY (User_ID) REFERENCES dbo.Users(User_ID)
 );
 ----------------------------------------------------------------------------------------
@@ -119,15 +119,41 @@ END
 GO
 CREATE TABLE dbo.Accounts(
 	Accounts_ID int IDENTITY(1,1) PRIMARY KEY,
-	Login nvarchar(50) NOT NULL,
-	Password nvarchar(50) NOT NULL,
 	User_ID int NOT NULL,
+	Login nvarchar(50) NOT NULL UNIQUE,
+	Password nvarchar(50) NOT NULL,
 	User_type_ID tinyint NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES dbo.Users(User_ID),
 	FOREIGN KEY (User_type_ID) REFERENCES dbo.User_types(User_type_ID)
 );
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+
+go
+DELETE FROM Physical_addresses;
+DELETE FROM Logical_addresses;
+DELETE FROM Payment_log;
+DELETE FROM Accounts;
+DELETE FROM Emails;
+DELETE FROM Phones;
+DELETE FROM Users;
+DELETE FROM Tariffs;
+DELETE FROM User_types;
+
+GO
+
+DBCC CHECKIDENT ('Physical_addresses', RESEED, 0);
+DBCC CHECKIDENT ('Logical_addresses', RESEED, 0);
+DBCC CHECKIDENT ('Payment_log', RESEED, 0);
+DBCC CHECKIDENT ('Accounts', RESEED, 0);
+DBCC CHECKIDENT ('Emails', RESEED, 0);
+DBCC CHECKIDENT ('Phones', RESEED, 0);
+DBCC CHECKIDENT ('Users', RESEED, 0);
+DBCC CHECKIDENT ('Tariffs', RESEED, 0);
+DBCC CHECKIDENT ('User_types', RESEED, 0);
+
+GO
+
 DROP TABLE Physical_addresses;
 DROP TABLE Logical_addresses;
 DROP TABLE Payment_log;
@@ -137,14 +163,3 @@ DROP TABLE Phones;
 DROP TABLE Users;
 DROP TABLE Tariffs;
 DROP TABLE User_types;
-
- 
-TRUNCATE TABLE Physical_addresses;
-TRUNCATE TABLE Logical_addresses;
-TRUNCATE TABLE Payment_log;
-TRUNCATE TABLE Accounts;
-TRUNCATE TABLE Emails;
-TRUNCATE TABLE Phones;
-TRUNCATE TABLE Users;
-TRUNCATE TABLE Tariffs;
-TRUNCATE TABLE User_types;
