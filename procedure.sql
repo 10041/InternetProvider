@@ -21,6 +21,9 @@ END CATCH;
 
 GO
 
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+
 IF OBJECT_ID('dbo.InsertTariffs') IS NOT NULL
 BEGIN 
     DROP PROC dbo.InsertTariffs 
@@ -38,6 +41,8 @@ BEGIN CATCH
 	if @@trancount > 0 rollback tran; 
 END CATCH;
 
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 IF OBJECT_ID('dbo.AddUser') IS NOT NULL
 BEGIN 
@@ -65,6 +70,17 @@ AS
 		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN 
 
+		IF(RTRIM(@Phone) NOT LIKE '80[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+			 IF(RTRIM(@Phone) NOT LIKE '+375[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+					THROW 50003, 'Неверный формат номера телефона.', 1;
+		IF(@Email NOT LIKE '%@%.%')
+			THROW 50004, 'Неверный формат почты.', 1;
+		IF(@MAC NOT LIKE '[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]')
+			THROW 50005, 'Неверный формат MAC.', 1;
+		IF(@Latitude NOT BETWEEN -90 AND 90)
+			IF(@Longitude BETWEEN -180 AND 180)
+				THROW 50006, 'Широта[-90,90], долгота[-180,180]', 1;
+
 		DECLARE @count int;
 		DECLARE @User_ID int;
 		exec @count = dbo.CheckUserName @First_name, @Last_name, @Patronymic;
@@ -76,20 +92,8 @@ AS
 		IF(@Tariff_ID is null)
 			THROW 50002, 'Не найден такой тариф', 1;
 
-		--DECLARE GetIDFromTariffs CURSOR LOCAL STATIC FOR
-		--SELECT dbo.Tariffs.Tariff_ID 
-		--FROM dbo.Tariffs 
-		--WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
-		--OPEN GetIDFromTariffs
-		--IF(@@CURSOR_ROWS = 1)
-		--	FETCH GetIDFromTariffs INTO @Tariff_ID
-		--ELSE
-		--	THROW 50002, 'Не найден такой тариф', 1;
-		--CLOSE GetIDFromTariffs
-		--DEALLOCATE GetIDFromTariffs;
-
-		INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Tariff_ID)
-		SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Tariff_ID;
+		INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Tariff_ID, Payment_balance)
+		SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Tariff_ID, 0;
 
 		SET @User_ID = IDENT_CURRENT('Users');
 
@@ -101,8 +105,6 @@ AS
 
 		INSERT INTO dbo.Logical_addresses(User_ID, MAC, IP_V4, IP_V6) 
 		SELECT @User_ID, @MAC, @IP_V4, @IP_V6;
-
-
 
 		INSERT INTO dbo.Accounts(User_ID, Login, Password, User_type_ID) 
 		SELECT @User_ID, @Login, @Password, 2;
@@ -127,6 +129,9 @@ AS
 	END CATCH
 
 GO
+
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 IF OBJECT_ID('dbo.CheckUserName') IS NOT NULL
 BEGIN 
@@ -153,6 +158,9 @@ AS BEGIN
 	return @count
 END
 
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+GO
 IF OBJECT_ID('dbo.GetUserByLogin') IS NOT NULL
 BEGIN 
     DROP PROC dbo.GetUserByLogin 
@@ -181,6 +189,9 @@ AS
 										dbo.Accounts.Login = @Login
 
 GO
+
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 IF OBJECT_ID('dbo.GetAllUsers') IS NOT NULL
 BEGIN 
@@ -211,6 +222,9 @@ AS
 
 GO
 
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+
 IF OBJECT_ID('dbo.GetTariffID') IS NOT NULL
 BEGIN 
     DROP PROC dbo.GetTariffID 
@@ -224,6 +238,9 @@ AS BEGIN
 	return @Tariff_ID
 END
 
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+
 IF OBJECT_ID('dbo.UserPay') IS NOT NULL
 BEGIN 
     DROP PROC dbo.UserPay 
@@ -234,18 +251,35 @@ CREATE PROCEDURE dbo.UserPay	@Login nvarchar(50),
 AS
 	BEGIN TRY
 		SET NOCOUNT ON 
-
-		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN
+			DECLARE @User_ID int
+			DECLARE @ResBalance real
 
+			SELECT @User_ID = dbo.Accounts.User_ID 
+			FROM dbo.Accounts
+			WHERE dbo.Accounts.Login = @Login
 
+			SELECT @ResBalance = dbo.Users.Payment_balance
+			FROM dbo.Users
+			WHERE dbo.Users.User_ID = @User_ID
+
+			UPDATE dbo.Users
+			SET dbo.Users.Payment_balance = @ResBalance + @Summ
+
+			INSERT INTO dbo.Payment_log(User_ID, Date_payment, Sum_payment)
+			values(@User_ID, GETDATE(), @Summ)
+
+			COMMIT TRAN
+		RETURN 1
 	END TRY
 	BEGIN CATCH
 		print error_number()
 		print error_message()
 		rollback tran
-		return 1
+		return 0
 	END CATCH
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 
 

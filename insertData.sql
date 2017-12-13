@@ -18,9 +18,9 @@ exec @res = dbo.AddUser 'Dima',
 						'tariff2',
 						'80291112233', 
 						'ar5aaa@agg.com', 
-						'AA-BB-CC-DD-EE-GG AA-BB-CC-DD-EE-GG', 
+						'AA-BB-CC-DD-EE-FF', 
 						'127.0.0.1', 
-						'ip_v6', 
+						'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF', 
 						'10051', 
 						'12345', 
 						53.932864, 
@@ -33,11 +33,11 @@ exec @res = dbo.AddUser 'Andrey',
 						'LaLaa', 
 						'22.10.1997', 
 						'tariff3',
-						'80291112233', 
+						'80291065212', 
 						'aa@gg.com', 
 						'AA-BB-CC-DD-EE-EE', 
 						'127.0.0.1', 
-						'ip_v6', 
+						'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF', 
 						'10052', 
 						'12345', 
 						53.932888, 
@@ -51,3 +51,11 @@ SELECT * FROM Users;
 
 exec dbo.GetUserByLogin '10051'
 exec dbo.GetAllUsers
+
+
+DECLARE @User_ID int
+			SELECT @User_ID = dbo.Accounts.User_ID 
+			FROM dbo.Accounts
+			WHERE dbo.Accounts.Login = '10052'
+			print @User_ID
+
