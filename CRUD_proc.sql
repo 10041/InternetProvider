@@ -495,31 +495,7 @@ AS
 
 	COMMIT
 GO
-IF OBJECT_ID('dbo.Physical_addressesInsert') IS NOT NULL
-BEGIN 
-    DROP PROC dbo.Physical_addressesInsert 
-END 
-GO
-CREATE PROC dbo.Physical_addressesInsert 
-    @User_ID int,
-    @location geography = NULL
-AS 
-	SET NOCOUNT ON 
-	SET XACT_ABORT ON  
-	
-	BEGIN TRAN
-	
-	INSERT INTO dbo.Physical_addresses (User_ID, location)
-	SELECT @User_ID, @location
-	
-	
-	SELECT Ph_address_ID, User_ID, location
-	FROM   dbo.Physical_addresses
-	WHERE  Ph_address_ID = SCOPE_IDENTITY()
-	
-               
-	COMMIT
-GO
+
 IF OBJECT_ID('dbo.Physical_addressesUpdate') IS NOT NULL
 BEGIN 
     DROP PROC dbo.Physical_addressesUpdate 
@@ -588,32 +564,7 @@ AS
 
 	COMMIT
 GO
-IF OBJECT_ID('dbo.TariffsInsert') IS NOT NULL
-BEGIN 
-    DROP PROC dbo.TariffsInsert 
-END 
-GO
-CREATE PROC dbo.TariffsInsert 
-    @Tariff_name nvarchar(50),
-    @Monthly_payment real,
-    @Speed smallint
-AS 
-	SET NOCOUNT ON 
-	SET XACT_ABORT ON  
-	
-	BEGIN TRAN
-	
-	INSERT INTO dbo.Tariffs (Tariff_name, Monthly_payment, Speed)
-	SELECT @Tariff_name, @Monthly_payment, @Speed
-	
-	
-	SELECT Tariff_ID, Tariff_name, Monthly_payment, Speed
-	FROM   dbo.Tariffs
-	WHERE  Tariff_ID = SCOPE_IDENTITY()
-	
-               
-	COMMIT
-GO
+
 IF OBJECT_ID('dbo.TariffsUpdate') IS NOT NULL
 BEGIN 
     DROP PROC dbo.TariffsUpdate 
@@ -683,30 +634,7 @@ AS
 
 	COMMIT
 GO
-IF OBJECT_ID('dbo.User_typesInsert') IS NOT NULL
-BEGIN 
-    DROP PROC dbo.User_typesInsert 
-END 
-GO
-CREATE PROC dbo.User_typesInsert 
-    @Type nvarchar(50)
-AS 
-	SET NOCOUNT ON 
-	SET XACT_ABORT ON  
-	
-	BEGIN TRAN
-	
-	INSERT INTO dbo.User_types (Type)
-	SELECT @Type
-	
-	
-	SELECT User_type_ID, Type
-	FROM   dbo.User_types
-	WHERE  User_type_ID = SCOPE_IDENTITY()
-	
-               
-	COMMIT
-GO
+
 IF OBJECT_ID('dbo.User_typesUpdate') IS NOT NULL
 BEGIN 
     DROP PROC dbo.User_typesUpdate 
@@ -774,35 +702,7 @@ AS
 
 	COMMIT
 GO
-IF OBJECT_ID('dbo.UsersInsert') IS NOT NULL
-BEGIN 
-    DROP PROC dbo.UsersInsert 
-END 
-GO
-CREATE PROC dbo.UsersInsert 
-    @BirthDay date,
-    @First_name nvarchar(50),
-    @Last_Name nvarchar(50),
-    @Patronymic nvarchar(50),
-    @Payment_balance real = NULL,
-    @Tariff_ID tinyint = NULL
-AS 
-	SET NOCOUNT ON 
-	SET XACT_ABORT ON  
-	
-	BEGIN TRAN
-	
-	INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Payment_balance, Tariff_ID)
-	SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Payment_balance, @Tariff_ID
-	
-	
-	SELECT User_ID, BirthDay, First_name, Last_Name, Patronymic, Payment_balance, Tariff_ID
-	FROM   dbo.Users
-	WHERE  User_ID = SCOPE_IDENTITY()
-	
-               
-	COMMIT
-GO
+
 IF OBJECT_ID('dbo.UsersUpdate') IS NOT NULL
 BEGIN 
     DROP PROC dbo.UsersUpdate 

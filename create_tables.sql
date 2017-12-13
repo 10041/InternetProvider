@@ -9,7 +9,7 @@ BEGIN
 END 
 GO
 CREATE TABLE dbo.Tariffs(
-	Tariff_ID tinyint IDENTITY(1,1) PRIMARY KEY,
+	Tariff_ID int IDENTITY(1,1) PRIMARY KEY,
 	Tariff_name nvarchar(50) NOT NULL,
 	Monthly_payment real NOT NULL,
 	Speed smallint NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE dbo.Users(
 	Last_Name nvarchar(50) NOT NULL,
 	Patronymic nvarchar(50) NOT NULL,
 	Payment_balance real,
-	Tariff_ID tinyint,
+	Tariff_ID int,
 	FOREIGN KEY (Tariff_ID) REFERENCES dbo.Tariffs(Tariff_ID)
 );
 ----------------------------------------------------------------------------------------
@@ -128,6 +128,7 @@ CREATE TABLE dbo.Accounts(
 );
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+USE InternetProvider;
 
 go
 DELETE FROM Physical_addresses;

@@ -57,25 +57,36 @@ CREATE PROC dbo.AddUser		@First_name nvarchar(50),
 							@Login nvarchar(50),
 							@Password nvarchar(50),
 							@Latitude float,
-							@Longitude float--,
-							--@rc tinyint output
+							@Longitude float
 AS
 	BEGIN TRY
 		SET NOCOUNT ON 
 
 		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN 
-		
+
 		DECLARE @count int;
 		DECLARE @User_ID int;
 		exec @count = dbo.CheckUserName @First_name, @Last_name, @Patronymic;
 		IF(@count > 0)
 			THROW 50001, 'Пользователь с таким именем уже существует.', 1;
 
-		DECLARE @Tariff_ID tinyint;
+		DECLARE @Tariff_ID int;
 		SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
-		--SET @rc = @Tariff_ID
-		
+		IF(@Tariff_ID is null)
+			THROW 50002, 'Не найден такой тариф', 1;
+
+		--DECLARE GetIDFromTariffs CURSOR LOCAL STATIC FOR
+		--SELECT dbo.Tariffs.Tariff_ID 
+		--FROM dbo.Tariffs 
+		--WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
+		--OPEN GetIDFromTariffs
+		--IF(@@CURSOR_ROWS = 1)
+		--	FETCH GetIDFromTariffs INTO @Tariff_ID
+		--ELSE
+		--	THROW 50002, 'Не найден такой тариф', 1;
+		--CLOSE GetIDFromTariffs
+		--DEALLOCATE GetIDFromTariffs;
 
 		INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Tariff_ID)
 		SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Tariff_ID;
@@ -91,6 +102,8 @@ AS
 		INSERT INTO dbo.Logical_addresses(User_ID, MAC, IP_V4, IP_V6) 
 		SELECT @User_ID, @MAC, @IP_V4, @IP_V6;
 
+
+
 		INSERT INTO dbo.Accounts(User_ID, Login, Password, User_type_ID) 
 		SELECT @User_ID, @Login, @Password, 2;
 
@@ -100,7 +113,7 @@ AS
 		SELECT @User_ID, @g;
 		
 		COMMIT TRAN
-		RETURN @Tariff_ID;
+		RETURN 1;
 		--Значения широты всегда находятся в интервале [-90, 90]. 
 		--Все значения, находящиеся вне этого диапазона, вызывают исключение. 
 		--Значения долготы всегда находятся в интервале [-180, 180].
@@ -110,7 +123,7 @@ AS
 		print error_number()
 		print error_message()
 		rollback tran
-		return 1
+		return 0
 	END CATCH
 
 GO
@@ -140,7 +153,18 @@ AS BEGIN
 	return @count
 END
 
-
+IF OBJECT_ID('dbo.GetTariffID') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.GetTariffID 
+END 
+GO
+CREATE PROC dbo.GetTariffID	@Tariff_name nvarchar(50)
+AS BEGIN
+	SET NOCOUNT ON 
+	DECLARE @Tariff_ID tinyint
+	SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
+	return @Tariff_ID
+END
 
 IF OBJECT_ID('dbo.UserPay') IS NOT NULL
 BEGIN 
@@ -165,16 +189,7 @@ AS
 		return 1
 	END CATCH
 
---CREATE PROCEDURE InsertUser(@First_name nvarchar(50), @Last_name nvarchar(50), @Patronymic nvarchar(50), @Phone int, @Email nvarchar(50), 
 
-
-
-DROP PROCEDURE InsertUserType;
-DROP PROCEDURE InsertTariffs;
-
-
-
-GO;
 
 DECLARE @p1 float;
 DECLARE @p2 float;
@@ -189,9 +204,3 @@ SET @p4 = 27.550501;
 SET @g = geography::Point(@p1, @p2, 4326); 
 SET @h = geography::Point(@p3, @p4, 4326); 
 SELECT @g.STDistance(@h);
-
-
-
-DECLARE @Tariff_ID tinyint;
-SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = 'tariff2';
-print @Tariff_ID;

@@ -35,23 +35,25 @@ END CATCH
 print IDENT_CURRENT('Users');
 
 
-DECLARE @res tinyint
+DECLARE @res int
 exec @res = dbo.AddUser 'Dima', 
 						'Laqrr', 
 						'LaLaa', 
 						'22.10.1997', 
+						'tariff2',
 						'80291112233', 
-						'tariff3', 
 						'ar5aaa@agg.com', 
-						'AA-BB-CC-DD-EE-GGddddddddddd', 
+						'AA-BB-CC-DD-EE-GG AA-BB-CC-DD-EE-GG', 
 						'127.0.0.1', 
 						'ip_v6', 
 						'10051', 
 						'12345', 
 						53.932864, 
-						27.428590,
-						@rc = @res OUTPUT
+						27.428590
 print @res
+
+SELECT * FROM Tariffs;
+SELECT * FROM User_types;
 
 DECLARE @Tariff_ID tinyint
 		SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = 'tariff2'
@@ -59,3 +61,28 @@ DECLARE @Tariff_ID tinyint
 
 INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Tariff_ID)
 		SELECT '22.10.1997', 'a', 'a', 'a', @Tariff_ID
+
+
+DECLARE @Tariff_ID tinyint
+exec @Tariff_ID = GetTariffID 'tariff2'
+print @Tariff_ID
+
+DECLARE @Tariff_ID int;
+SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = 'tariff2';
+print @Tariff_ID
+
+SELECT * FROM Users;
+
+DECLARE @Tariff_ID int;
+DECLARE GetIDFromTariffs CURSOR LOCAL STATIC FOR
+		SELECT dbo.Tariffs.Tariff_ID 
+		FROM dbo.Tariffs 
+		WHERE dbo.Tariffs.Tariff_name = 'tariff2';
+		OPEN GetIDFromTariffs
+		IF(@@CURSOR_ROWS = 1)
+			FETCH GetIDFromTariffs INTO @Tariff_ID
+		ELSE
+			THROW 50002, 'Не найден такой тариф', 1;
+		CLOSE GetIDFromTariffs
+		DEALLOCATE GetIDFromTariffs;
+		print @Tariff_ID
