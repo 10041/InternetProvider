@@ -153,6 +153,64 @@ AS BEGIN
 	return @count
 END
 
+IF OBJECT_ID('dbo.GetUserByLogin') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.GetUserByLogin 
+END
+GO
+CREATE PROC dbo.GetUserByLogin @Login nvarchar(50)
+AS 
+	SELECT	dbo.Users.First_name,
+			dbo.Users.Last_Name,
+			dbo.Users.Patronymic,
+			dbo.Users.BirthDay,
+			dbo.Users.Payment_balance,
+			dbo.Phones.Phone,
+			dbo.Emails.Email,
+			dbo.Logical_addresses.MAC,
+			dbo.Logical_addresses.IP_V4,
+			dbo.Logical_addresses.IP_V6,
+			dbo.Accounts.Login,
+			dbo.Physical_addresses.Location
+			FROM dbo.Users 
+			INNER JOIN dbo.Phones ON dbo.Users.User_ID = dbo.Phones.User_ID
+			INNER JOIN dbo.Emails ON dbo.Users.User_ID = dbo.Emails.User_ID
+			INNER JOIN dbo.Logical_addresses ON dbo.Users.User_ID = dbo.Logical_addresses.User_ID
+			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
+			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID AND
+										dbo.Accounts.Login = @Login
+
+GO
+
+IF OBJECT_ID('dbo.GetAllUsers') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.GetAllUsers 
+END
+GO
+CREATE PROC dbo.GetAllUsers 
+AS 
+	SELECT	dbo.Users.First_name,
+			dbo.Users.Last_Name,
+			dbo.Users.Patronymic,
+			dbo.Users.BirthDay,
+			dbo.Users.Payment_balance,
+			dbo.Phones.Phone,
+			dbo.Emails.Email,
+			dbo.Logical_addresses.MAC,
+			dbo.Logical_addresses.IP_V4,
+			dbo.Logical_addresses.IP_V6,
+			dbo.Accounts.Login,
+			dbo.Accounts.Password,
+			dbo.Physical_addresses.Location
+			FROM dbo.Users 
+			INNER JOIN dbo.Phones ON dbo.Users.User_ID = dbo.Phones.User_ID
+			INNER JOIN dbo.Emails ON dbo.Users.User_ID = dbo.Emails.User_ID
+			INNER JOIN dbo.Logical_addresses ON dbo.Users.User_ID = dbo.Logical_addresses.User_ID
+			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
+			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID
+
+GO
+
 IF OBJECT_ID('dbo.GetTariffID') IS NOT NULL
 BEGIN 
     DROP PROC dbo.GetTariffID 
