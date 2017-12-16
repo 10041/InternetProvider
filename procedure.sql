@@ -11,11 +11,14 @@ GO
 CREATE PROCEDURE dbo.InsertUserType (@type nvarchar(50))
 AS 
 BEGIN TRY
+	SET NOCOUNT ON
 	BEGIN TRAN
 	INSERT INTO dbo.User_types (Type) values (@type)
 	commit tran;
 END TRY
 BEGIN CATCH
+	print error_number()
+	print error_message()
 	if @@trancount > 0 rollback tran; 
 END CATCH;
 
@@ -32,18 +35,78 @@ GO
 CREATE PROCEDURE dbo.InsertTariffs (@Tariff_name nvarchar(50), @Monthly_payment real, @speed smallint)
 AS
 BEGIN TRY
+	SET NOCOUNT ON
 	BEGIN TRAN
 	INSERT INTO dbo.Tariffs (Tariff_name, Monthly_payment, Speed) 
 	values ( @Tariff_name, @Monthly_payment, @speed)
 	commit tran;
 END TRY
 BEGIN CATCH
+	print error_number()
+	print error_message()
 	if @@trancount > 0 rollback tran; 
 END CATCH;
 
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
 
+GO
+IF OBJECT_ID('dbo.UpdateTariffs') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.UpdateTariffs 
+END 
+GO
+CREATE PROCEDURE dbo.UpdateTariffs (@Tariff_name nvarchar(50), @New_Monthly_payment real, @New_speed smallint)
+AS
+BEGIN TRY
+	SET NOCOUNT ON
+
+	SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
+	
+	SELECT dbo.Tariffs.Tariff_ID 
+		FROM dbo.Tariffs 
+		WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
+	IF(@@ROWCOUNT = 0)
+		THROW 50002, 'Не найден такой тариф.', 1;
+
+	BEGIN TRAN
+		UPDATE dbo.Tariffs 
+			SET dbo.Tariffs.Monthly_payment = @New_Monthly_payment,
+				dbo.Tariffs.Speed = @New_speed
+			WHERE dbo.Tariffs.Tariff_name = @Tariff_name
+	commit tran;
+	return 1
+END TRY
+BEGIN CATCH
+	print error_number()
+	print error_message()
+	if @@trancount > 0 rollback tran; 
+	return 0
+END CATCH;
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+GO
+IF OBJECT_ID('dbo.TariffsDelete') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.TariffsDelete 
+END 
+GO
+CREATE PROC dbo.TariffsDelete 
+    @Tariff_name nvarchar(50)
+AS 
+	SET NOCOUNT ON 
+	SET XACT_ABORT ON  
+	
+	BEGIN TRAN
+
+	DELETE
+	FROM   dbo.Tariffs
+	WHERE  dbo.Tariffs.Tariff_name = @Tariff_name
+
+	COMMIT
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+GO
 IF OBJECT_ID('dbo.AddUser') IS NOT NULL
 BEGIN 
     DROP PROC dbo.AddUser 
@@ -70,9 +133,8 @@ AS
 		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN 
 
-		IF(RTRIM(@Phone) NOT LIKE '80[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
-			 IF(RTRIM(@Phone) NOT LIKE '+375[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
-					THROW 50003, 'Неверный формат номера телефона.', 1;
+		IF(RTRIM(@Phone) NOT LIKE '(%)[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
+				THROW 50003, 'Неверный формат номера телефона (прим. (11)111-1111).', 1;
 		IF(@Email NOT LIKE '%@%.%')
 			THROW 50004, 'Неверный формат почты.', 1;
 		IF(@MAC NOT LIKE '[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]')
@@ -88,34 +150,43 @@ AS
 			THROW 50001, 'Пользователь с таким именем уже существует.', 1;
 
 		DECLARE @Tariff_ID int;
-		SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
+		SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID 
+			FROM dbo.Tariffs 
+			WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
 		IF(@Tariff_ID is null)
-			THROW 50002, 'Не найден такой тариф', 1;
+			THROW 50002, 'Не найден такой тариф.', 1;
 
 		INSERT INTO dbo.Users (BirthDay, First_name, Last_Name, Patronymic, Tariff_ID, Payment_balance)
-		SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Tariff_ID, 0;
+			SELECT @BirthDay, @First_name, @Last_Name, @Patronymic, @Tariff_ID, 0;
 
 		SET @User_ID = IDENT_CURRENT('Users');
 
 		INSERT INTO dbo.Phones(User_ID, Phone)
-		SELECT @User_ID, @Phone;
+			SELECT @User_ID, @Phone;
 
 		INSERT INTO dbo.Emails(User_ID, Email) 
-		SELECT @User_ID, @Email;
+			SELECT @User_ID, @Email;
 
 		INSERT INTO dbo.Logical_addresses(User_ID, MAC, IP_V4, IP_V6) 
-		SELECT @User_ID, @MAC, @IP_V4, @IP_V6;
+			SELECT @User_ID, @MAC, @IP_V4, @IP_V6;
+
+		DECLARE @User_type_ID tinyint
+		SELECT @User_type_ID = User_type_ID 
+			FROM dbo.User_types 
+			WHERE dbo.User_types.Type = 'user'
+		IF(@User_type_ID is NULL)
+			THROW 50008, 'Перед добавлением пользователя добавьте тип пользователя user', 1;
 
 		INSERT INTO dbo.Accounts(User_ID, Login, Password, IsActive, User_type_ID) 
-		SELECT @User_ID, @Login, @Password, 0, 2;
+			SELECT @User_ID, @Login, @Password, 0, @User_type_ID;
 
 		DECLARE @g geography;
 		SET @g = geography::Point(@Latitude, @Longitude, 4326);
 		INSERT INTO dbo.Physical_addresses(User_ID, Location) 
-		SELECT @User_ID, @g;
+			SELECT @User_ID, @g;
 		
 		COMMIT TRAN
-		RETURN 1;
+		RETURN @User_ID;
 		--Значения широты всегда находятся в интервале [-90, 90]. 
 		--Все значения, находящиеся вне этого диапазона, вызывают исключение. 
 		--Значения долготы всегда находятся в интервале [-180, 180].
@@ -129,10 +200,70 @@ AS
 	END CATCH
 
 GO
-
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.AddAdmin') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.AddAdmin 
+END 
+GO
+CREATE PROC dbo.AddAdmin	@First_name nvarchar(50), 
+							@Last_name nvarchar(50), 
+							@Patronymic nvarchar(50), 
+							@BirthDay date,
+							@Tariff_name nvarchar(50),
+							@Phone nchar(15), 
+							@Email nvarchar(50),
+							@MAC nchar(17), 
+							@IP_V4 nchar(15), 
+							@IP_V6 nchar(39), 
+							@Login nvarchar(50),
+							@Password nvarchar(50)
+AS
+	BEGIN TRY
+		SET NOCOUNT ON
+		DECLARE @res int
+		exec @res = dbo.AddUser	@First_name, 
+								@Last_name, 
+								@Patronymic, 
+								@BirthDay, 
+								@Tariff_name, 
+								@Phone, 
+								@Email,
+								@MAC,
+								@IP_V4,
+								@IP_V6,
+								@Login,
+								@Password,
+								0,
+								0
+		print @res
+		IF(@res = 0)
+			return 0
 
+		DECLARE @User_type_ID tinyint
+		SELECT @User_type_ID = User_type_ID 
+			FROM dbo.User_types 
+			WHERE dbo.User_types.Type = 'admin'
+		IF(@User_type_ID is NULL)
+			THROW 50008, 'Перед добавлением администратора добавьте тип пользователя admin', 1;
+		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
+		BEGIN TRAN
+		UPDATE dbo.Accounts 
+			SET dbo.Accounts.User_type_ID = @User_type_ID 
+			WHERE dbo.Accounts.User_ID = @res
+		COMMIT TRAN
+		RETURN @res
+	END TRY
+	BEGIN CATCH
+		print error_number()
+		print error_message()
+		rollback tran
+		return 0
+	END CATCH
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+GO
 IF OBJECT_ID('dbo.CheckUserName') IS NOT NULL
 BEGIN 
     DROP PROC dbo.CheckUserName 
@@ -167,7 +298,12 @@ BEGIN
 END
 GO
 CREATE PROC dbo.GetUserByLogin @Login nvarchar(50)
-AS 
+AS BEGIN
+	SELECT dbo.Accounts.User_ID 
+		FROM dbo.Accounts
+		WHERE dbo.Accounts.Login = @Login
+		IF(@@ROWCOUNT = 0)
+			THROW 50007, 'Такого пользователя не существует', 1;
 	SELECT	dbo.Users.User_ID,
 			dbo.Users.First_name,
 			dbo.Users.Last_Name,
@@ -191,7 +327,7 @@ AS
 			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
 			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID AND
 										dbo.Accounts.Login = @Login
-
+END
 GO
 
 ----------------------------------------------------------------------------------------
@@ -203,14 +339,16 @@ BEGIN
 END
 GO
 CREATE PROC dbo.GetAllUsers 
-AS 
+AS BEGIN
 	SELECT	dbo.Users.User_ID,
 			dbo.Users.First_name,
 			dbo.Users.Last_Name,
 			dbo.Users.Patronymic,
 			dbo.Users.BirthDay,
 			dbo.Users.Payment_balance,
+			dbo.User_types.Type,
 			dbo.Tariffs.Tariff_name,
+			(dbo.Tariffs.Monthly_payment / 30)[DailyPayment],
 			dbo.Phones.Phone,
 			dbo.Emails.Email,
 			dbo.Accounts.Login,
@@ -227,7 +365,8 @@ AS
 			INNER JOIN dbo.Logical_addresses ON dbo.Users.User_ID = dbo.Logical_addresses.User_ID
 			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
 			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID
-
+			INNER JOIN dbo.User_types ON dbo.User_types.User_type_ID = dbo.Accounts.User_type_ID
+END
 			
 
 GO
@@ -242,10 +381,19 @@ END
 GO
 CREATE PROC dbo.GetTariffID	@Tariff_name nvarchar(50)
 AS BEGIN
+BEGIN TRY
 	SET NOCOUNT ON 
 	DECLARE @Tariff_ID tinyint
 	SELECT @Tariff_ID = dbo.Tariffs.Tariff_ID FROM dbo.Tariffs WHERE dbo.Tariffs.Tariff_name = @Tariff_name;
+	IF(@@ROWCOUNT = 0)
+		THROW 50007, 'Такого тарифа не существует', 1;
 	return @Tariff_ID
+END TRY
+BEGIN CATCH
+	print error_number()
+	print error_message()
+	return 0
+END CATCH
 END
 
 ----------------------------------------------------------------------------------------
@@ -271,7 +419,7 @@ AS
 			FROM dbo.Accounts
 			WHERE dbo.Accounts.Login = @Login
 			IF(@@ROWCOUNT = 0)
-			THROW 50007, 'Такого пользователя не существует', 1;
+				THROW 50007, 'Такого пользователя не существует', 1;
 
 			SELECT @ResBalance = dbo.Users.Payment_balance
 			FROM dbo.Users
@@ -347,16 +495,115 @@ AS
 	END CATCH
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.DailyPayment') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.DailyPayment 
+END 
+GO
+CREATE PROC dbo.DailyPayment
+AS
+	BEGIN TRY
+		SET NOCOUNT ON
+
+		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
+		BEGIN TRAN
+
+		DECLARE getAllUsersCursor CURSOR 
+		FOR SELECT dbo.Users.User_ID, dbo.Tariffs.Monthly_payment, dbo.Users.Payment_balance
+			FROM dbo.Tariffs 
+			INNER JOIN dbo.Users ON dbo.Tariffs.Tariff_ID = dbo.Users.Tariff_ID
+			INNER JOIN dbo.Accounts ON dbo.Accounts.User_ID = dbo.Users.User_ID
+			INNER JOIN dbo.User_types ON dbo.Accounts.User_type_ID = dbo.User_types.User_type_ID
+			AND dbo.User_types.Type != 'admin'
+		OPEN getAllUsersCursor
+			IF(@@CURSOR_ROWS = 0)
+				THROW 50008, 'Пользователей нет.', 1;
+			DECLARE @User_ID int,
+					@Monthly_payment real,
+					@Payment_balance real
+			FETCH NEXT FROM getAllUsersCursor INTO @User_ID, @Monthly_payment, @Payment_balance
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+			--------------------
+			------- LOOP -------
+				IF(@Payment_balance-@Monthly_payment / 30 < 0)
+					UPDATE dbo.Accounts SET dbo.Accounts.IsActive = 0 WHERE dbo.Accounts.User_ID = @User_ID
+				ELSE
+					UPDATE dbo.Accounts SET dbo.Accounts.IsActive = 1 WHERE dbo.Accounts.User_ID = @User_ID
+
+				UPDATE dbo.Users 
+					SET dbo.Users.Payment_balance = @Payment_balance-@Monthly_payment / 30
+					WHERE dbo.Users.User_ID = @User_ID
+
+				FETCH NEXT FROM getAllUsersCursor INTO @User_ID, @Monthly_payment, @Payment_balance
+			------- END -------
+			-------------------
+			END
+		CLOSE getAllUsersCursor
+		DEALLOCATE getAllUsersCursor;
+
+		COMMIT TRAN
+		RETURN 1
+	END TRY
+	BEGIN CATCH
+		print error_number()
+		print error_message()
+		ROLLBACK TRAN
+		RETURN 0
+	END CATCH
+----------------------------------------------------------------------------------------
+--daily payment
+----------------------------------------------------------------------------------------
 IF OBJECT_ID('dbo.GetStatusAccount') IS NOT NULL
 BEGIN 
     DROP PROC dbo.GetStatusAccount 
 END 
 GO
 CREATE PROC dbo.GetStatusAccount @Login nvarchar(50)
-AS
-	
+AS BEGIN
+BEGIN TRY
+	SET NOCOUNT ON
+	DECLARE @Status int
+	SELECT @Status = dbo.Accounts.IsActive 
+		FROM dbo.Accounts
+		WHERE dbo.Accounts.Login = @Login
+	IF(@@ROWCOUNT = 0)
+		THROW 50007, 'Такого пользователя не существует', 1;
+	IF(@Status > 0)
+		print 'Active'
+	ELSE
+		print 'Blocked'
+	RETURN @Status
+END TRY
+BEGIN CATCH
+		print error_number()
+		print error_message()
+END CATCH
+END
+
+GO
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.DeleteUser') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.DeleteUser 
+END 
+GO
+CREATE PROC dbo.DeleteUser @Login nvarchar(50)
+AS BEGIN
+BEGIN TRY
+	SET NOCOUNT ON
+
+END TRY
+BEGIN CATCH
+		print error_number()
+		print error_message()
+END CATCH
+END
+
+
+GO
+
 use InternetProvider;
 
 

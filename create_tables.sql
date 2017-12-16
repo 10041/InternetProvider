@@ -10,7 +10,7 @@ END
 GO
 CREATE TABLE dbo.Tariffs(
 	Tariff_ID int IDENTITY(1,1) PRIMARY KEY,
-	Tariff_name nvarchar(50) NOT NULL,
+	Tariff_name nvarchar(50) NOT NULL UNIQUE,
 	Monthly_payment real NOT NULL,
 	Speed smallint NOT NULL,
 );
