@@ -44,13 +44,36 @@ exec @res = dbo.AddUser 'Andrey',
 						27.427590
 print @res
 
+DECLARE @res int
+exec @res = dbo.AddUser 'Andey', 
+						'Laqrr', 
+						'LaLaa', 
+						'22.10.1997', 
+						'tariff3',
+						'80291065212', 
+						'aa@gg.om', 
+						'AA-BB-CC-DD-AE-EE', 
+						'127.0.0.1', 
+						'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF', 
+						'10052', 
+						'12345', 
+						53.932888, 
+						27.427590
+print @res
+
 SELECT * FROM Tariffs;
 SELECT * FROM User_types;
 SELECT * FROM Users;
 
-
-exec dbo.GetUserByLogin '10051'
+exec dbo.GetUserByLogin '10052'
 exec dbo.GetAllUsers
+
+exec dbo.UserPay '10051', 200
+exec dbo.UserPay '10052', 20
+
+exec dbo.CheckPay '1005'
+exec dbo.CheckPay '10052'
+
 
 
 DECLARE @User_ID int
@@ -58,4 +81,10 @@ DECLARE @User_ID int
 			FROM dbo.Accounts
 			WHERE dbo.Accounts.Login = '10052'
 			print @User_ID
+
+
+SELECT dbo.Tariffs.Monthly_payment
+		FROM dbo.Users
+		INNER JOIN dbo.Tariffs ON dbo.Users.Tariff_ID = dbo.Tariffs.Tariff_ID
+		WHERE dbo.Users.User_ID = 1
 

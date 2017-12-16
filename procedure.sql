@@ -106,8 +106,8 @@ AS
 		INSERT INTO dbo.Logical_addresses(User_ID, MAC, IP_V4, IP_V6) 
 		SELECT @User_ID, @MAC, @IP_V4, @IP_V6;
 
-		INSERT INTO dbo.Accounts(User_ID, Login, Password, User_type_ID) 
-		SELECT @User_ID, @Login, @Password, 2;
+		INSERT INTO dbo.Accounts(User_ID, Login, Password, IsActive, User_type_ID) 
+		SELECT @User_ID, @Login, @Password, 0, 2;
 
 		DECLARE @g geography;
 		SET @g = geography::Point(@Latitude, @Longitude, 4326);
@@ -168,19 +168,23 @@ END
 GO
 CREATE PROC dbo.GetUserByLogin @Login nvarchar(50)
 AS 
-	SELECT	dbo.Users.First_name,
+	SELECT	dbo.Users.User_ID,
+			dbo.Users.First_name,
 			dbo.Users.Last_Name,
 			dbo.Users.Patronymic,
 			dbo.Users.BirthDay,
 			dbo.Users.Payment_balance,
+			dbo.Tariffs.Tariff_name,
 			dbo.Phones.Phone,
 			dbo.Emails.Email,
+			dbo.Accounts.Login,
+			dbo.Accounts.IsActive,
 			dbo.Logical_addresses.MAC,
 			dbo.Logical_addresses.IP_V4,
 			dbo.Logical_addresses.IP_V6,
-			dbo.Accounts.Login,
 			dbo.Physical_addresses.Location
 			FROM dbo.Users 
+			INNER JOIN dbo.Tariffs ON dbo.Users.Tariff_ID = dbo.Tariffs.Tariff_ID
 			INNER JOIN dbo.Phones ON dbo.Users.User_ID = dbo.Phones.User_ID
 			INNER JOIN dbo.Emails ON dbo.Users.User_ID = dbo.Emails.User_ID
 			INNER JOIN dbo.Logical_addresses ON dbo.Users.User_ID = dbo.Logical_addresses.User_ID
@@ -200,25 +204,31 @@ END
 GO
 CREATE PROC dbo.GetAllUsers 
 AS 
-	SELECT	dbo.Users.First_name,
+	SELECT	dbo.Users.User_ID,
+			dbo.Users.First_name,
 			dbo.Users.Last_Name,
 			dbo.Users.Patronymic,
 			dbo.Users.BirthDay,
 			dbo.Users.Payment_balance,
+			dbo.Tariffs.Tariff_name,
 			dbo.Phones.Phone,
 			dbo.Emails.Email,
+			dbo.Accounts.Login,
+			dbo.Accounts.Password,
+			dbo.Accounts.IsActive,
 			dbo.Logical_addresses.MAC,
 			dbo.Logical_addresses.IP_V4,
 			dbo.Logical_addresses.IP_V6,
-			dbo.Accounts.Login,
-			dbo.Accounts.Password,
 			dbo.Physical_addresses.Location
 			FROM dbo.Users 
+			INNER JOIN dbo.Tariffs ON dbo.Users.Tariff_ID = dbo.Tariffs.Tariff_ID
 			INNER JOIN dbo.Phones ON dbo.Users.User_ID = dbo.Phones.User_ID
 			INNER JOIN dbo.Emails ON dbo.Users.User_ID = dbo.Emails.User_ID
 			INNER JOIN dbo.Logical_addresses ON dbo.Users.User_ID = dbo.Logical_addresses.User_ID
 			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
 			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID
+
+			
 
 GO
 
@@ -251,6 +261,8 @@ CREATE PROCEDURE dbo.UserPay	@Login nvarchar(50),
 AS
 	BEGIN TRY
 		SET NOCOUNT ON 
+
+		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN
 			DECLARE @User_ID int
 			DECLARE @ResBalance real
@@ -258,6 +270,8 @@ AS
 			SELECT @User_ID = dbo.Accounts.User_ID 
 			FROM dbo.Accounts
 			WHERE dbo.Accounts.Login = @Login
+			IF(@@ROWCOUNT = 0)
+			THROW 50007, 'Такого пользователя не существует', 1;
 
 			SELECT @ResBalance = dbo.Users.Payment_balance
 			FROM dbo.Users
@@ -265,6 +279,7 @@ AS
 
 			UPDATE dbo.Users
 			SET dbo.Users.Payment_balance = @ResBalance + @Summ
+			WHERE dbo.Users.User_ID = @User_ID
 
 			INSERT INTO dbo.Payment_log(User_ID, Date_payment, Sum_payment)
 			values(@User_ID, GETDATE(), @Summ)
@@ -280,7 +295,69 @@ AS
 	END CATCH
 ----------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.CheckPay') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.CheckPay 
+END 
+GO
+CREATE PROC dbo.CheckPay @Login nvarchar(50)
+AS
+	BEGIN TRY
+		SET NOCOUNT ON
 
+		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
+		BEGIN TRAN
+		DECLARE @User_ID int
+		DECLARE @ResBalance real
+		DECLARE @Monthly_payment real
+
+
+		SELECT @User_ID = dbo.Accounts.User_ID 
+		FROM dbo.Accounts
+		WHERE dbo.Accounts.Login = @Login
+		IF(@@ROWCOUNT = 0)
+			THROW 50007, 'Такого пользователя не существует', 1;
+
+		SELECT @ResBalance = dbo.Users.Payment_balance
+		FROM dbo.Users
+		WHERE dbo.Users.User_ID = @User_ID
+
+		SELECT @Monthly_payment = dbo.Tariffs.Monthly_payment
+		FROM dbo.Users
+		INNER JOIN dbo.Tariffs ON dbo.Users.Tariff_ID = dbo.Tariffs.Tariff_ID
+		WHERE dbo.Users.User_ID = @User_ID
+
+		IF(@ResBalance-@Monthly_payment / 30 < 0)
+			UPDATE dbo.Accounts SET dbo.Accounts.IsActive = 0 WHERE dbo.Accounts.Login = @Login
+		ELSE
+			UPDATE dbo.Accounts SET dbo.Accounts.IsActive = 1 WHERE dbo.Accounts.Login = @Login
+
+		UPDATE dbo.Users 
+		SET dbo.Users.Payment_balance = @ResBalance-@Monthly_payment / 30
+		WHERE dbo.Users.User_ID = @User_ID
+
+		COMMIT TRAN
+		RETURN 1
+	END TRY
+	BEGIN CATCH
+		print error_number()
+		print error_message()
+		ROLLBACK TRAN
+		RETURN 0
+	END CATCH
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.GetStatusAccount') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.GetStatusAccount 
+END 
+GO
+CREATE PROC dbo.GetStatusAccount @Login nvarchar(50)
+AS
+	
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+use InternetProvider;
 
 
 DECLARE @p1 float;

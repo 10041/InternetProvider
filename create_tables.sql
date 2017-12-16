@@ -122,7 +122,7 @@ CREATE TABLE dbo.Accounts(
 	User_ID int NOT NULL,
 	Login nvarchar(50) NOT NULL UNIQUE,
 	Password nvarchar(50) NOT NULL,
-	--Active 
+	IsActive bit NOT NULL,
 	User_type_ID tinyint NOT NULL,
 	FOREIGN KEY (User_ID) REFERENCES dbo.Users(User_ID),
 	FOREIGN KEY (User_type_ID) REFERENCES dbo.User_types(User_type_ID)
