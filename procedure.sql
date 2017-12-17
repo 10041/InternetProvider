@@ -260,20 +260,42 @@ BEGIN CATCH
 		print error_message()
 		return null
 END CATCH
+GO
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+IF OBJECT_ID('dbo.NearestUsers') IS NOT NULL
+BEGIN 
+    DROP PROC dbo.NearestUsers 
+END 
+GO
+CREATE PROC dbo.NearestUsers	@Login nvarchar(50)
+AS 
+BEGIN TRY
+	DECLARE @User_ID int
+	DECLARE @loc geography
+
+	SELECT @User_ID = dbo.Accounts.User_ID 
+	FROM dbo.Accounts
+	WHERE dbo.Accounts.Login = @Login
+	IF(@User_ID is null)
+		THROW 50007, 'Такого пользователя не существует', 1;
+
+
+	SELECT @loc = dbo.Physical_addresses.Location
+	FROM dbo.Physical_addresses
+	WHERE dbo.Physical_addresses.User_ID = @User_ID
+
+	SELECT TOP(7) dbo.Accounts.Login, dbo.Physical_addresses.Location.ToString() 
+	FROM dbo.Accounts 
+	INNER JOIN dbo.Physical_addresses ON dbo.Accounts.User_ID = dbo.Physical_addresses.User_ID
+	WHERE Location.STDistance(@loc) IS NOT NULL
+	ORDER BY Location.STDistance(@loc)
+
+END TRY
+BEGIN CATCH
+		print error_number()
+		print error_message()
+END CATCH
+
 
 use InternetProvider;
-
-
-DECLARE @p1 float;
-DECLARE @p2 float;
-DECLARE @p3 float;
-DECLARE @p4 float;
-DECLARE @g geography;  
-DECLARE @h geography;
-SET @p1 = 53.932864;
-SET @p2 = 27.428590;
-SET @p3 = 53.892033;
-SET @p4 = 27.550501;
-SET @g = geography::Point(@p1, @p2, 4326); 
-SET @h = geography::Point(@p3, @p4, 4326); 
-SELECT @g.STDistance(@h);

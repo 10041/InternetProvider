@@ -73,11 +73,11 @@ AS
 		SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
 		BEGIN TRAN 
 
-		IF(RTRIM(@Phone) NOT LIKE '(%)[0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
+		IF(RTRIM(@Phone) NOT LIKE '(%) [0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
 				THROW 50003, 'Неверный формат номера телефона (прим. (11)111-1111).', 1;
 		IF(@Email NOT LIKE '%@%.%')
 			THROW 50004, 'Неверный формат почты.', 1;
-		IF(@MAC NOT LIKE '[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]-[0-F][0-F]')
+		IF(@MAC NOT LIKE '[0-F][0-F]:[0-F][0-F]:[0-F][0-F]:[0-F][0-F]:[0-F][0-F]:[0-F][0-F]')
 			THROW 50005, 'Неверный формат MAC.', 1;
 		IF(@Latitude NOT BETWEEN -90 AND 90)
 			THROW 50006, 'Широта[-90,90], долгота[-180,180]', 1;
