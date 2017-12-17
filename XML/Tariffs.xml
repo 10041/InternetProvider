@@ -1,0 +1,20 @@
+﻿<Tariffs>
+	<Tariff>
+		<Tariff_ID>1</Tariff_ID>
+		<Tariff_name>tariff1</Tariff_name>
+		<Monthly_payment>3.0000000e+002</Monthly_payment>
+		<Speed>10</Speed>
+	</Tariff>
+	<Tariff>
+		<Tariff_ID>2</Tariff_ID>
+		<Tariff_name>tariff2</Tariff_name>
+		<Monthly_payment>3.0000000e+003</Monthly_payment>
+		<Speed>100</Speed>
+	</Tariff>
+	<Tariff>
+		<Tariff_ID>3</Tariff_ID>
+		<Tariff_name>tariff3</Tariff_name>
+		<Monthly_payment>3.0000000e+001</Monthly_payment>
+		<Speed>1</Speed>
+	</Tariff>
+</Tariffs>

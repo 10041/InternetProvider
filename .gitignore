@@ -1,4 +1,3 @@
 generator/package-lock.json
 generator/node_modules/
 generator/res.sql
-toXML.sql
