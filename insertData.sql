@@ -12,6 +12,8 @@ exec dbo.UpdateTariffs 'tariff1', 300, 10;
 exec dbo.UpdateTariffs 'tariff2', 3000, 100;
 exec dbo.UpdateTariffs 'tariff3', 30, 1;
 
+exec dbo.TariffsDelete 'tariff3'
+
 DECLARE @res int
 exec @res = dbo.AddUser 'Dima', 
 						'Laqrr', 
@@ -69,33 +71,36 @@ exec dbo.GetUserByLogin '10050'
 exec dbo.GetAllUsers
 
 exec dbo.UserPay '10051', 470
-exec dbo.UserPay '10052', 20
+exec dbo.UserPay '10052', 2
 
 exec dbo.CheckPay '10051'
 exec dbo.CheckPay '10052'
 
-exec dbo.GetStatusAccount '10052'
+exec dbo.GetStatusAccount '10051'
 
 exec dbo.DailyPayment
 
 exec dbo.GetAllUsers
 
+exec dbo.DeleteUser '10051'
+exec dbo.GetAllUsers
 
-DECLARE @User_ID int
-			SELECT @User_ID = dbo.Accounts.User_ID 
-			FROM dbo.Accounts
-			WHERE dbo.Accounts.Login = '10052'
-			print @User_ID
+exec dbo.GetUserByEmail 'aa@gg.om'
+exec dbo.GetUserByMAC 'AA-BB-CC-DD-EE-E'
 
+exec dbo.GetUserByName 'Andre', 
+						'Laqrr', 
+						'LaLaa'
+exec GetPaymentLog '10052'
 
-SELECT dbo.Tariffs.Monthly_payment
-		FROM dbo.Users
-		INNER JOIN dbo.Tariffs ON dbo.Users.Tariff_ID = dbo.Tariffs.Tariff_ID
-		WHERE dbo.Users.User_ID = 1
+exec UpdateAccount '10052', '54321'
+exec UpdateUserTariff '10052', 'tariff1'
+exec UpdatePhone '10052', '(222)555-9900'
 
-SELECT dbo.Users.User_ID, dbo.Tariffs.Monthly_payment, dbo.Users.Payment_balance
-		FROM dbo.Tariffs 
-		INNER JOIN dbo.Users ON dbo.Tariffs.Tariff_ID = dbo.Users.Tariff_ID
-		INNER JOIN dbo.Accounts ON dbo.Accounts.User_ID = dbo.Users.User_ID
-		INNER JOIN dbo.User_types ON dbo.Accounts.User_type_ID = dbo.User_types.User_type_ID
-		AND dbo.User_types.Type != 'admin'
+--53.891492, 27.559753 (ул. Свердлова, 13А)
+--53.932583, 27.428394 (ул. Каменногорская, 100)
+
+exec UpdateLocation '10051', 53.891492, 27.559753
+exec UpdateLocation '10052', 53.932583, 27.428394
+
+exec DistanceFromUsers '10051', '10052'
