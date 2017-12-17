@@ -48,47 +48,50 @@ const Identity = require('fake-identity');
 const fs = require('fs');
 const randomMac = require('random-mac');
 let count = 100000;
-try{
-  let tariffID = 1
-  
-  fs.truncateSync('res.sql');
-  fs.appendFileSync('res.sql', 'use InternetProvider;');
-  for(let i = 0; i < count; i++){
-    let p1 = Math.random();
-    let p2 = Math.random();
-    if(tariffID === 4){
-     tariffID = 1;
-    }
-    let data = Identity.generate();
+ aa = async () => {
+     try {
+          let tariffID = 1
+         
+         fs.truncateSync('res.sql');
+         fs.appendFileSync('res.sql', 'use InternetProvider;');
+         for(let i = 0; i < count; i++){
+           let p1 = Math.random();
+           let p2 = Math.random();
+           if(tariffID === 4){
+            tariffID = 1;
+           }
+           let data = Identity.generate();
 
-    let mac = randomMac(randomMac(` `));
-    let arr = mac.split(':')
-    arr.splice(0, 1);
-    mac = arr.join(':');
+           let mac = randomMac(randomMac(` `));
+           let arr = mac.split(':')
+           arr.splice(0, 1);
+           mac = arr.join(':');
 
-   let str = `
-   exec dbo.AddUser 
-   '${data.firstName}', 
-   '${data.lastName}', 
-   'Vic${i}', 
-   '22.10.1997', 
-   'tariff${tariffID}', 
-   '${data.phoneNumber}', 
-   '${data.emailAddress}', 
-   '${mac}', 
-   '127.0.0.1', 
-   'IPv6', 
-   'login${i}', 
-   '12345', 
-   ${p1 + 53}, 
-   ${p2 + 27}`;
-   fs.appendFileSync('res.sql', str);
+          let str = `
+          exec dbo.AddUser 
+          '${data.firstName}', 
+          '${data.lastName}', 
+          'Vic${i}', 
+          '22.10.1997', 
+          'tariff${tariffID}', 
+          '${data.phoneNumber}', 
+          '${i}${data.emailAddress}', 
+          '${mac}', 
+          '127.0.0.1', 
+          'IPv6', 
+          'login${i}', 
+          '12345', 
+          ${p1 + 53}, 
+          ${p2 + 27}`;
+          fs.appendFileSync('res.sql', str);
 
-    tariffID++;
-  }
-  console.log("done");
-}
-catch{
-  console.log(err)
-  console.log("err");
-}
+           tariffID++;
+         }
+         console.log("done");
+     } catch (err) {
+         console.log(err)
+         console.log("err");
+     }
+ }
+
+ let res = aa()

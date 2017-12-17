@@ -1,6 +1,30 @@
 
 use InternetProvider;
 
+
+DELETE FROM Physical_addresses;
+DELETE FROM Logical_addresses;
+DELETE FROM Payment_log;
+DELETE FROM Accounts;
+DELETE FROM Emails;
+DELETE FROM Phones;
+DELETE FROM Users;
+DELETE FROM Tariffs;
+DELETE FROM User_types;
+
+GO
+
+DBCC CHECKIDENT ('Physical_addresses', RESEED, 0);
+DBCC CHECKIDENT ('Logical_addresses', RESEED, 0);
+DBCC CHECKIDENT ('Payment_log', RESEED, 0);
+DBCC CHECKIDENT ('Accounts', RESEED, 0);
+DBCC CHECKIDENT ('Emails', RESEED, 0);
+DBCC CHECKIDENT ('Phones', RESEED, 0);
+DBCC CHECKIDENT ('Users', RESEED, 0);
+DBCC CHECKIDENT ('Tariffs', RESEED, 0);
+DBCC CHECKIDENT ('User_types', RESEED, 0);
+
+
 exec dbo.InsertUserType @type = 'admin';
 exec dbo.InsertUserType @type = 'user';
 
@@ -65,18 +89,17 @@ print @res
 
 SELECT * FROM Tariffs;
 SELECT * FROM User_types;
-SELECT * FROM Users;
 
-exec dbo.GetUserByLogin '10050'
+exec dbo.GetUserByLogin '10042'
 exec dbo.GetAllUsers
 
 exec dbo.UserPay '10041', 470
-exec dbo.UserPay '10042', 2
+exec dbo.UserPay '10042', 101
 
 exec dbo.CheckPay '10041'
 exec dbo.CheckPay '10042'
 
-exec dbo.GetStatusAccount '10041'
+exec dbo.GetStatusAccount '10042'
 
 exec dbo.DailyPayment
 
@@ -88,10 +111,10 @@ exec dbo.GetAllUsers
 exec dbo.GetUserByEmail 'andreyoleksyuk@gmail.com'
 exec dbo.GetUserByMAC 'AA-BB-CC-DD-EE-E'
 
-exec dbo.GetUserByName 'Andre', 
-						'Laqrr', 
-						'LaLaa'
-exec GetPaymentLog '10052'
+exec dbo.GetUserByName 'Andrey', 
+						'Oleksyuk', 
+						'Victorovich'
+exec GetPaymentLog '10042'
 
 exec UpdateAccount '10052', '54321'
 exec UpdateUserTariff '10052', 'tariff1'
@@ -103,6 +126,6 @@ exec UpdatePhone '10052', '(222)555-9900'
 exec UpdateLocation '10041', 53.891492, 27.559753
 exec UpdateLocation '10042', 53.932583, 27.428394
 
-exec DistanceFromUsers '10051', '10052'
+exec DistanceFromUsers '10041', '10042'
 
-
+exec NearestUsers '10041'
