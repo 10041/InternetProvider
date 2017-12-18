@@ -225,6 +225,7 @@ AS BEGIN
 			INNER JOIN dbo.Physical_addresses ON dbo.Users.User_ID = dbo.Physical_addresses.User_ID
 			INNER JOIN dbo.Accounts ON dbo.Users.User_ID = dbo.Accounts.User_ID
 			INNER JOIN dbo.User_types ON dbo.User_types.User_type_ID = dbo.Accounts.User_type_ID
+			ORDER BY dbo.Users.User_ID
 END
 			
 

@@ -285,7 +285,7 @@ BEGIN TRY
 	FROM dbo.Physical_addresses
 	WHERE dbo.Physical_addresses.User_ID = @User_ID
 
-	SELECT TOP(7) dbo.Accounts.Login, dbo.Physical_addresses.Location.ToString() 
+	SELECT TOP(7) dbo.Accounts.Login, Physical_addresses.Location.ToString() 
 	FROM dbo.Accounts 
 	INNER JOIN dbo.Physical_addresses ON dbo.Accounts.User_ID = dbo.Physical_addresses.User_ID
 	WHERE Location.STDistance(@loc) IS NOT NULL

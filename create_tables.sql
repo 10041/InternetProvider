@@ -67,7 +67,7 @@ GO
 CREATE TABLE dbo.Physical_addresses(
 	Ph_address_ID int IDENTITY(1,1) PRIMARY KEY,
 	User_ID int NOT NULL,
-	Location geography,	
+	Location geography NOT NULL,	
 	FOREIGN KEY (User_ID) REFERENCES dbo.Users(User_ID)
 );
 ----------------------------------------------------------------------------------------

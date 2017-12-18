@@ -39,7 +39,7 @@ exec dbo.UpdateTariffs 'tariff3', 30, 1;
 exec dbo.TariffsDelete 'tariff4'
 
 DECLARE @res int
-exec @res = dbo.AddUser 'Andrey', 
+exec @res = dbo.AddUser 'Andre', 
 						'Oleksyuk',
 						'Victorovich', 
 						'22.10.1997', 
@@ -51,7 +51,7 @@ exec @res = dbo.AddUser 'Andrey',
 						'FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF', 
 						'10041', 
 						'12345', 
-						53.932864, 
+						253.932864, 
 						27.428590
 print @res
 GO
@@ -90,7 +90,7 @@ print @res
 SELECT * FROM Tariffs;
 SELECT * FROM User_types;
 
-exec dbo.GetUserByLogin '10042'
+exec dbo.GetUserByLogin '10041'
 exec dbo.GetAllUsers
 
 exec dbo.UserPay '10041', 470
@@ -105,8 +105,10 @@ exec dbo.DailyPayment
 
 exec dbo.GetAllUsers
 
+exec dbo.DeleteUser '10041'
 exec dbo.DeleteUser '10042'
-exec dbo.GetAllUsers
+exec dbo.DeleteUser '10043'
+--exec dbo.GetAllUsers
 
 exec dbo.GetUserByEmail 'andreyoleksyuk@gmail.com'
 exec dbo.GetUserByMAC 'AA-BB-CC-DD-EE-E'

@@ -1,0 +1,1 @@
+sqlcmd -S DESKTOP-L5ROMAE -E -i backup.sql
